@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from user import User
 from datetime import datetime
 import random
-
+import config
 
 router = APIRouter()
 
@@ -14,45 +14,35 @@ def valid_data(user: dict):
     if "name" not in user or "family" not in user or "email_adress" not in user:
         raise HTTPException(status_code=400, detail="something missing")
 
-def user_check(id):
-    if id not in users_db:
-        raise HTTPException(status_code=404, detail="User not found")
+
 
 users_db = {}
 
 @router.get("/users/all")
 def get_all_user():
-    return users_db
-
-
-
-
+    return config.get_all_user() 
+   
 @router.get("/users/{id}")
 def get_user(id: int):
-    user_check(id)
-    return users_db[id]
+    return config.get_user_id(id)
 
 @router.post("/users")
 def create_user(user: dict):
     current_id = id_generator()
     date_now = str(datetime.now())
     valid_data(user)
-    user = User(id = current_id, name = user["name"], family = user["family"], email_adress = user["email_adress"], created_date = date_now)
+    user = User(id = current_id, name = user["name"], family = user["family"], email_adress = user["email_adress"], created_date = date_now, updated_date = date_now)
     users_db[current_id] = user
+    config.insert_user(user)
     return user
     
 @router.delete("/users/{id}")
 def delete_user(user_id: int):
-    user_check(id)
-    del users_db[user_id]
-    return {"message": "user deleted successfully"}
+    return config.delete_user(user_id)
 
 @router.put("/users/{id}")
 def update_user(user: dict, user_id: int):
-    user_check(user_id)
-    created_date = users_db[user_id].created_date
     updated_time = str(datetime.now())
     valid_data(user)
-    user = User(id = user_id, name = user["name"], family = user["family"], email_adress = user["email_adress"],created_date = created_date, updated_date = updated_time)
-    users_db[user_id] = user
-    return user
+    return config.update_user_by_id(name = user["name"], family = user["family"], email = user["email_adress"],user_id=user_id)
+
